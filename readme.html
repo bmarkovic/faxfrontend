@@ -1,0 +1,169 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=utf-8">
+	<TITLE>Fax Frontend for HylaFAX</TITLE>
+	<META NAME="GENERATOR" CONTENT="OpenOffice.org 2.0  (Linux)">
+	<META NAME="CREATED" CONTENT="20070304;11590100">
+	<META NAME="CHANGED" CONTENT="20070405;21233700">
+	<STYLE TYPE="text/css">
+	<!--
+		P { color: #000000 }
+		DD { color: #000000 }
+		DT { color: #000000 }
+		A:link { color: #000099 }
+		A:visited { color: #990099 }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="en-US" TEXT="#000000" LINK="#000099" VLINK="#990099" BGCOLOR="#ffffff" DIR="LTR">
+<P><U>1. Introduction</U></P>
+<P>Faxfrontend is a GUI interface to the HylaFAX (tm) client
+programs. It includes a modified version of Sebastiano Vigna's
+fax4CUPS to invoke it when a file is printed to a CUPS printer. With
+the fax4CUPS interface installed, the user prints to the fax printer,
+and the GUI front end is invoked to get the fax number, etc., from
+the user. The program can also be invoked in a standalone mode to
+queue a file for faxing.</P>
+<P><IMG SRC="readme.pics/ffe.png" NAME="Graphic1" ALIGN=LEFT WIDTH=645 HEIGHT=433 BORDER=0><BR CLEAR=LEFT><BR><BR>
+</P>
+<P>A rolodex for commonly used fax numbers is provided, and a query
+to the HylaFAX server is displayed after the fax is queued for
+transmission.</P>
+<P>When the files have been handed off to HylaFAX to send, the
+program displays the fax queue status by repeatedly executing
+'faxstat', and capturing the output for display:</P>
+<P><FONT COLOR="#000099"><A HREF="readme.pics/stat.png"><FONT COLOR="#000099"><IMG SRC="readme.pics/stat.png" NAME="graphics1" ALIGN=BOTTOM WIDTH=565 HEIGHT=242 BORDER=1></FONT></A></FONT></P>
+<P><U>2. Requirements</U></P>
+<P>Qt libraries, moc, and uic utilities
+(<A HREF="http://www.trolltech.com/">http://www.trolltech.com</A>)<BR>'sudo'
+- execute a command as another user
+(<A HREF="http://www.sudo.ws/sudo/sudo.html">http://www.sudo.ws/sudo/sudo.html</A>)<BR>CUPS
+- Common Unix Printing System (<A HREF="http://www.cups.org/">http://www.cups.org</A>)</P>
+<DL>
+	<DT><U>3. Installation</U></DT><DT>
+	<BR>
+	</DT><DT>
+	<U>3.2. Building the distribution</U></DT><DT>
+	<U>3.2.1. Qt development files</U></DT><DD>
+	<BR>
+	</DD><DD STYLE="margin-left: 0in; margin-bottom: 0.2in">
+	Faxfrontend uses the Qt GUI tool kit, version 3, and the QTDIR
+	environment variable must be properly set before starting the build.
+	It should point to the directory containing the Qt header files and
+	libraries, so a typical setting is:</DD></DL>
+<P STYLE="margin-left: 0.79in">
+export QTDIR=/usr/lib/qt3</P>
+<DL>
+	<DD STYLE="margin-left: 0in">and so “/usr/lib/qt3/include” would
+	hold the headers, “/usr/lib/qt3/bin” contains the 'moc' and
+	'uic' executables.  Alternatively, use “configure
+	–with-qtdir=/usr/lib/qt3” in the next step.  The Ubuntu
+	distribution uses /usr/share/qt3, so “configure
+	–with-qtdir=/usr/share/qt3” should work.</DD><DD STYLE="margin-left: 0in">
+	<BR>
+	</DD><DT>
+	<U>3.2.2. Build and install</U></DT><DL>
+		<DD>
+		export QTDIR=&lt;qt-distrib-dir&gt;</DD><DD>
+		configure</DD><DD>
+		make 
+		</DD><DD STYLE="margin-bottom: 0.2in">
+		make install 
+		</DD></DL>
+	<DT>
+	<U>3.3. System setup</U></DT><DT STYLE="margin-bottom: 0.2in">
+	<U>3.3.1 'sudo' configuration</U></DT></DL>
+<P>
+The CUPS system must be able run the 'sudo' command in a backend
+script. The account that the CUPS daemon 'cupsd' runs with must be
+enabled to run 'sudo' command without passwords. The account used by
+CUPS to run external programs such as backend scripts is controlled
+by the 'User' directive in /etc/cups/cupsd.conf. For example, if the
+CUPS daemon uses the 'lp' account, there must be a line in
+/etc/sudoers to enable 'sudo' command usage:</P>
+<DL>
+	<DD STYLE="margin-bottom: 0.2in">lp ALL=(ALL) NOPASSWD: ALL</DD></DL>
+<P>
+Use the 'visudo' command to edit the '/etc/sudoers' file.</P>
+<DL>
+	<DT STYLE="margin-bottom: 0.2in"><U>3.3.2 CUPS configuration</U></DT></DL>
+<P>
+Restart the CUPS server, and define a fax printer for CUPS to use the
+hylafax.ppd and hylafax backend script. Use the CUPS WWW tool to
+create the printer (<A HREF="http://localhost:631/">http://localhost:631</A>).
+If the files have been correctly installed, the screens should look
+like the following screen shots:</P>
+<P><BR><BR>
+</P>
+<P><IMG SRC="readme.pics/ci0.png" NAME="Graphic2" ALIGN=LEFT WIDTH=693 HEIGHT=439 BORDER=0><BR CLEAR=LEFT><BR><BR>
+</P>
+<P><IMG SRC="readme.pics/ci1.png" NAME="Graphic3" ALIGN=LEFT WIDTH=700 HEIGHT=494 BORDER=0><BR CLEAR=LEFT><BR><BR>
+</P>
+<P><IMG SRC="readme.pics/ci2.png" NAME="Graphic4" ALIGN=LEFT WIDTH=651 HEIGHT=559 BORDER=0><BR CLEAR=LEFT><BR><BR>
+</P>
+<P><IMG SRC="readme.pics/ci3.png" NAME="Graphic5" ALIGN=LEFT WIDTH=656 HEIGHT=483 BORDER=0><BR CLEAR=LEFT><BR><BR><U>4.
+Standalone Usage</U></P>
+<P>Invoke from the command line, either with or without a filename
+for faxing:</P>
+<P STYLE="margin-left: 0.79in">faxfrontend [file to fax]</P>
+<P>If no file is given, the user has the option to send a cover page
+only, using the comments section for the fax content.</P>
+<P><U>5. File Manifest</U></P>
+<P STYLE="text-decoration: none">Executables:</P>
+<DL>
+	<DD>/usr/local/bin/faxfrontend 
+	</DD><DD STYLE="margin-bottom: 0.2in">
+	/usr/local/bin/messagebox 
+	</DD></DL>
+<P>
+CUPS configuration files:</P>
+<DL>
+	<DD>/usr/lib/cups/backend/hylafax 
+	</DD><DD STYLE="margin-bottom: 0.2in">
+	/usr/share/cups/model/hylafax.ppd 
+	</DD></DL>
+<P>
+Defaults file:</P>
+<P>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; ~/.faxfrontendrc 
+</P>
+<P>Rolodex file:</P>
+<DL>
+	<DD STYLE="margin-bottom: 0.2in">~/.faxrolodex 
+	</DD></DL>
+<P>
+<U>6. Troubleshooting</U></P>
+<P>The CUPS error log (usually /var/log/cups/error_log) can contain
+useful information.&nbsp; Logging is controlled by the
+/etc/cupsd.conf file.&nbsp; The 'faxfrontend' program will log the
+faxcover and sendfax commands it generates to the system log (level
+daemon.info) when executed with the -d option.&nbsp; Change the line
+in /usr/lib/cups/backend/hylafax that executes the 'faxfrontend'
+program to</P>
+<P>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; m=`sudo -H -u $USER
+$FAXGUI -d $FAXNAME`</P>
+<P>to enable debug logging.</P>
+<P>When the backend script '/usr/lib/cups/backend/hylafax' is
+executed at the command line with no arguments, it should report
+standard CUPS backend &quot;discovery&quot; information, and exit
+with status 0:</P>
+<P># /usr/lib/cups/backend/hylafax <BR>direct hylafax:/local
+&quot;Unknown&quot; &quot;Local HylaFAX server&quot;<U><BR><BR>7.
+Acknowledgments</U> 
+</P>
+<P><SPAN STYLE="text-decoration: none">This is a Qt knock off of Andy
+Moskoff's 'tkhylafax' (<A HREF="ftp://ftp.hylafax.org/contrib/tkhylafax">ftp://ftp.hylafax.org/contrib/tkhylafax</A>).
+I really wanted to use the fax4CUPS interface, but wasn't adept
+enough with Tcl/Tk to make modifications to 'tkhylafax' to accept a
+filename as an argument. Sebastiano Vigna did the original work for
+fax4CUPS (<A HREF="http://gongolo.usr.dsi.unimi.it/%7Evigna/fax4CUPS">http://gongolo.usr.dsi.unimi.it/~vigna/fax4CUPS</A>),
+which is really the best paradigm for sending a fax. &nbsp;Geoffrey
+Wossum supplied configuration tools for Qt with autoconf
+(<A HREF="http://sourceforge.net/projects/autoqt">http://sourceforge.net/projects/autoqt</A>).</SPAN></P>
+<P STYLE="margin-left: 0.44in; text-decoration: none">Glenn
+Burkhardt<BR>January, 2004<BR>Westford, Massachusetts</P>
+<P STYLE="margin-left: 0.44in"><SPAN STYLE="text-decoration: none"><A HREF="mailto:gbburkhardt@verizon.net">gbburkhardt@verizon.net</A><BR><A HREF="ftp://ftp.hylafax.org/contrib/faxfrontend">ftp://ftp.hylafax.org/contrib/faxfrontend</A></SPAN></P>
+<P><BR><BR><BR>
+</P>
+</BODY>
+</HTML>
