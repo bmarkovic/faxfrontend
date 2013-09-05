@@ -1,0 +1,26 @@
+Original fax4CUPS installation instructions
+
+Sebastiano Vigna
+http://gongolo.usr.dsi.unimi.it/~vigna/fax4CUPS
+
+==========================================================================
+Installing fax4CUPS is very easy:
+
+0. Install efax (http://www.cce.com/efax/) or HylaFAX
+(http://www.hylafax.org/). For HylaFAX you need also grep and sudo.
+
+1. Install the man page.
+
+2. Install the efax/hylafax scripts in the CUPS backend directory, for
+instance, /usr/lib/cups/backend/; you can look at the first lines of the file
+for configurable parameters (the fax script is provided for backward
+compatibility only).  Make sure the executable paths are correct for your
+system.
+
+3. Install the PPD files efax.ppd/hylafax.ppd in the CUPS model directory, for
+instance, /usr/share/cups/model, and create a new printer using the a suitable
+backend (see the man page; the fax.ppd PPD file is provided for backward
+compatibility only).
+
+4. Restart the CUPS daemon (usually "/etc/rc.d/init.d/cups restart" as root
+will do the job).

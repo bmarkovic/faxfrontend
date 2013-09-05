@@ -1,0 +1,44 @@
+1.1; 22 Mar 2007 Explicitly pass DISPLAY variable in backend script 
+	         in showerror() function to avoid 'Default env_reset' in
+		 /etc/sudoers.  Add check that 'sudo' command can be
+		 executed, since some distributions are running CUPS under
+		 'lp' user, instead of 'root' user.  Update documentation
+		 to note that account that CUPS uses to run must be
+		 enabled to run 'sudo' commands with NOPASSWD.  Correct
+		 file permission problem (when CUPS runs with a
+		 non-superuser account, it can't change the owner of the
+		 temporary file used to access the fax by the GUI).
+		 Add check for correct DISPLAY variable
+		 
+1.0; 28 Feb 2006 Tweak backend script to avoid problem with /etc/sudoers
+		'Default env_reset' setting (thanks to Karl Schmidt)
+
+0.7; 6 Nov 2004 Copy the file passed to CUPS backend as arg 6 to a temporary
+		file so it is readable by all users; security levels on some
+		systems prevent users from reading files from the CUPS spool
+		directory, where the file lives.
+
+0.6;24 Aug 2004 Eliminated use of Qt Platinum style; not available with 
+	        version of Qt shipped with Mandrake 10.0
+
+0.5: 5 Apr 2004 Fixed bug:  backend script wouldn't ignore comments
+	        in hyla.conf file; line with "#Host: foobar.com" wouldn't
+		be ignored.
+
+0.4:12 Feb 2004 Fixed bugs:  couldn't have single quotes in remarks, etc.
+		Internal cover page wouldn't send if 'no cover page'
+		was checked.  Internal cover page generation didn't use
+		page size.  Correct need to exit twice from status display.
+		Additional error checking.  Capture stderr from faxstat
+		for display.  Fork status display so print queue isn't
+		hung while waiting for user to quit status display.
+
+0.3:25 Jan 2004 Check port to Solaris, improve check for MOC, UIC in
+	      	acsite.m4, minor fix for Qt2, removed moc files from
+	      	distribution (should be re-built at each site); 
+		corrected backend script to limit prints to stdout
+		so CUPS gets correct device info.  Corrected documentation
+		to reflect what happens with correct backend script.
+
+0.2:19 Jan 2004 Improved documentation
+0.1:19 Jan 2004 Initial version.

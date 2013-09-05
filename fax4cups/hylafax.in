@@ -1,0 +1,201 @@
+#!/bin/bash
+#
+# $Id: hylafax.in,v 1.11 2007/04/01 20:49:28 glenn Exp $
+#
+# Copyright (C) 2001-2002 Sebastiano Vigna <vigna@acm.org>
+#
+#   This program is free software; you can redistribute it and/or modify it
+#   under the terms of the GNU General Public License as published by the Free
+#   Software Foundation; either version 2 of the License, or (at your option)
+#   any later version.
+#
+#   This program is distributed in the hope that it will be useful, but
+#   WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+#   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+#   for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# Modified by Michael Goffioul <goffioul@imec.be>
+#
+#   - phone number as option instead of job name: "-o phone=<number>"
+#
+# Modified by Arnold Moene <a.f.moene@eduphys.xs4all.nl>
+#
+# - This is a hacked version of the fax backend, to make it work for 
+#   a local HylaFAX server 
+#
+# Additional fixes by Kevin Ivory <Ivory@SerNet.de>
+#
+# Derived from fax4CUPS 1.22, a fax backend for CUPS, to use X app to 
+# pick up fax info by Glenn Burkhardt <gbburkhardt@verizon.net>
+#
+# Note:  to put messages into the CUPS error log, use 
+#        echo "ERROR: your error or info message" 1>&2
+#
+# The HylaFAX client programs 'sendfax', 'faxcover', must be found in
+# the user's execution search path.
+#
+# The HylaFAX client program 'faxstat' must be in the search path of
+# this script, which is not run as $USER
+#
+export PATH=$PATH:/usr/local/bin	# in case faxstat is in /usr/local/bin
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+bindir=@bindir@
+FAXGUI=$bindir/faxfrontend
+MESSAGEBOX=$bindir/ffe_messagebox
+
+showError()
+{
+    # to the CUPS error log
+    echo "ERROR: $1" 1>&2
+
+    # to the user
+    sudo -H -u $USER /bin/sh -c "DISPLAY=$DISPLAY $MESSAGEBOX \"ERROR: $1\""
+}
+
+# Called with no arguments, we list the provided HylaFAX backend 
+# (serial devices are irrelevant here).
+
+if [ $# -eq 0 ]; then
+    for i in faxstat $FAXGUI $MESSAGEBOX ; do 
+        which $i >& /dev/null
+	if [ $? != 0 ]; then
+	    echo "ERROR: can't find HylaFAX program $i" 1>&2
+	    exit 1; 
+	fi
+    done
+    echo "direct hylafax:/local \"Unknown\" \"Local HylaFAX server\""
+    exit 0
+fi
+
+# Check that 'sudo' can be executed by whatever account CUPS uses to run
+SM=`sudo -l`
+if [ $? != 0 ]; then
+    UIDMSG=`id`
+    echo "ERROR: CUPS runs under '$UIDMSG'; can't run 'sudo': $SM" 1>&2
+    exit 1
+fi
+
+# Get the user that owns the job
+USER=$2
+
+echo 1>&2 # Apparently the first character emitted is somehow "eaten" by the reader
+
+# setup for invocation of X applications
+#
+# Check for correct display variable to use.  Most systems use :0.0; 
+# one Ubuntu installation uses :20.0
+#
+unset XAUTHORITY
+disp=`sudo -H -u $USER xauth list :0`
+if [ "$disp" = "" ] ; then
+    disp=`sudo -H -u $USER xauth list | awk 'match($0, /(unix)(:[0-9][0-9]*)/, dn) { print dn[2]; exit }'`
+    # check result
+    export DISPLAY=$disp
+else
+    export DISPLAY=:0
+fi
+#echo ERROR: using DISPLAY=$DISPLAY 1>&2
+
+# If we find six arguments, the last one is the fax name; otherwise,
+# we're reading the fax data from stdin.
+# Some files lock out users from reading the CUPS spool directory, 
+# and pass the file in as arg 6.  So copy the file somewhere that
+# everyone can read it.
+FAXNAME=$(mktemp </dev/null /tmp/fax.XXXXXX) || (echo "ERROR: Failed to create temporary file" 1>&2; exit 1)
+
+if [ $# -eq 6 ]; then
+	# copy over file from spool directory
+	cp $6 $FAXNAME
+else
+	# copy from stdin
+	cat > $FAXNAME
+fi
+chmod a+r $FAXNAME
+
+# do some checking before continuing
+#
+which $MESSAGEBOX >& /dev/null
+if [ $? != 0 ] ; then
+    echo "ERROR: can't find executable $MESSAGEBOX" 1>&2
+    exit 1
+fi
+
+# All executables present and accounted for ??
+for i in faxstat ; do 
+    which $i >& /dev/null
+    if [ $? != 0 ]; then
+        showError "can't find HylaFAX program $i; check execution search path"
+	exit 1
+    fi
+done
+
+# These executables must be in the user's search path
+for i in sendfax faxcover ; do
+    sudo -H -u $USER which $i >& /dev/null
+    if [ $? != 0 ]; then
+	showError "can't find HylaFAX program $i for user $USER; check execution search path"
+	exit 1
+    fi
+done
+    
+
+# Determine the Hylafax host, and make sure we are connected:
+F0=/usr/local/lib/fax/hyla.conf
+F1=/usr/share/fax/hyla.conf
+F2=`sudo -H -u $USER sh -c 'echo $HOME'`/.hylarc
+
+unset host
+for cf in $F0 $F1 $F2 ; do 
+    if [ -f $cf ] ; then
+	host=`awk 'tolower($1) ~ /^ *host/ { print $2 }' $cf`
+	if [ $host != "" ] ; then break ; fi
+    fi
+done
+host=${host:-localhost}
+
+ping -c 1 -w 5 $host
+if [ $? != 0 ]; then
+    showError "can't connect to HylaFAX host $host"
+    exit 1
+fi
+
+RUNNING=`faxstat -s|grep HylaFAX|grep Running`
+if [ -z "$RUNNING" ]; then
+    showError "HylaFAX not running on $host"
+
+    # Raise error and hang the queue: this is fatal !
+    exit 1
+fi
+
+# Use sudo to make sure that job is owned by the user that wants to "print",
+# not root. This is needed so that the owner of the job can remove it if 
+# needed.
+# The 'faxfrontend' program takes a debug option; use 
+#	m=`sudo -H -u $USER $FAXGUI -d $FAXNAME`
+# to have the fax commands printed to the error log (LOG_DAEMON:LOG_INFO)
+#
+# Some systems have /etc/sudoers configured with "Default env_reset", which
+# causes the DISPLAY environment variable to be thrown away.  So we tell
+# 'sudo' to invoke a shell, and make sure the DISPLAY variable is set.
+
+m=`sudo -H -u $USER /bin/sh -c "DISPLAY=$DISPLAY $FAXGUI $FAXNAME"`
+
+RC=$?
+case $RC in
+	0) echo "INFO: Fax sent" 1>&2 ;;
+	# I do not know the return values of sendfax
+	*) echo "ERROR: sendfax error" 1>&2 ;;
+esac
+
+# put output from faxfrontend execution to log file; this will normally
+# be the queuing info from sendfax
+echo "ERROR: faxfrontend: $m" 1>&2
+
+rm -f $FAXNAME
+
+exit $RC
