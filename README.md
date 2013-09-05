@@ -78,7 +78,7 @@ Rolodex file:
 
 ## 6. Troubleshooting
 
-The CUPS error log (usually `/var/log/cups/error_log`) can contain useful information.  Logging is controlled by the `/etc/cupsd.conf` file.  The `faxfrontend` program will log the faxcover and sendfax commands it generates to the system log (level `daemon.info`) when executed with the `-d` option.  Change the line in `/usr/lib/cups/backend/hylafax` that executes the `faxfrontend` program to
+The CUPS error log (usually `/var/log/cups/error_log`) can contain useful information.  Logging is controlled by the `/etc/cupsd.conf` file.  The `faxfrontend` program will log the faxcover and sendfax commands it generates to the system log (level `daemon.info`) when executed with the `-d` option.  Change the line in `/usr/lib/cups/backend/hylafax that executes the `faxfrontend` program to
 
     m=`sudo -H -u $USER $FAXGUI -d $FAXNAME`
 
@@ -92,7 +92,7 @@ direct hylafax:`/local "Unknown" "Local HylaFAX server"`
 
 ## 7. Acknowledgments
 
-This is a Qt knock off of Andy Moskoff's `tkhylafax` ( ftp://ftp.hylafax.org/contrib/tkhylafax ). I really wanted to use the fax4CUPS interface, but wasn't adept enough with Tcl/Tk to make modifications to `tkhylafax` to accept a filename as an argument. Sebastiano Vigna did the original work for fax4CUPS ( http://gongolo.usr.dsi.unimi.it/~vigna/fax4CUPS ), which is really the best paradigm for sending a fax. Geoffrey Wossum supplied configuration tools for Qt with autoconf ( `http://sourceforge.net/projects/autoqt` ).
+This is a Qt knock off of Andy Moskoff's `tkhylafax` ( ftp://ftp.hylafax.org/contrib/tkhylafax ). I really wanted to use the fax4CUPS interface, but wasn't adept enough with Tcl/Tk to make modifications to `tkhylafax` to accept a filename as an argument. Sebastiano Vigna did the original work for fax4CUPS ( http://gongolo.usr.dsi.unimi.it/~vigna/fax4CUPS ), which is really the best paradigm for sending a fax. Geoffrey Wossum supplied configuration tools for Qt with autoconf ( http://sourceforge.net/projects/autoqt ).
 
 Glenn Burkhardt
 January, 2004
